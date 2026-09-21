@@ -37,7 +37,7 @@ virou uma venda de R$ 480, e o Google Ads receber essa venda com o `gclid` corre
 | Usuários | Só a equipe da agência | Senha compartilhada + nome do operador para a trilha de auditoria |
 | Onde o status é marcado | Na própria ferramenta | A lista de leads vira cartões no celular: é onde o atendimento marca |
 | Amarração WhatsApp | Código curto injetado no texto da mensagem | Determinístico, funciona com WhatsApp comum. Perde ~5% (lead apaga o código) |
-| Hospedagem | **Tudo na conta Cloudflare do cliente**, em `go.hotelbritanico.com.br` | Cookie 100% first-party, zero perda em Safari/iOS, um Worker só |
+| Hospedagem | **Tudo na conta Cloudflare do cliente**, em `go.britanico.com` | Cookie 100% first-party, zero perda em Safari/iOS, um Worker só |
 | Banco | D1 (SQLite) na mesma conta | KV free só permite 1.000 escritas/dia — inviável |
 | Google Ads | API direta (developer token já existente) | Upload automático por cron, com `DRY_RUN` antes do primeiro envio real |
 | Escopo da entrega 1 | Fatia vertical completa | Rastreio + painel + envio de conversão, ponta a ponta |
@@ -54,7 +54,7 @@ de ingestão entre contas, some o segundo deploy, some o token compartilhado.
 ```
 ┌──────────────── CONTA CLOUDFLARE DO CLIENTE ────────────────┐
 │                                                             │
-│  hotelbritanico.com.br        go.hotelbritanico.com.br      │
+│  britanico.com        go.britanico.com      │
 │  ┌──────────────────┐         ┌─────────────────────────┐   │
 │  │ site + /r.js     │────────▶│  WORKER                 │   │
 │  │ cookie _rastro   │ clique  │  /w/:slug  redirect     │   │
@@ -85,14 +85,14 @@ daquele cliente para e os dados ficam lá. Mitigação prática: manter o
 
 ### 4.1 WhatsApp
 
-1. Pessoa clica no anúncio → cai em `hotelbritanico.com.br/?gclid=Cj0KC...&utm_campaign=...`
+1. Pessoa clica no anúncio → cai em `britanico.com/?gclid=Cj0KC...&utm_campaign=...`
 2. O `/r.js` (tag no GTM ou no `<head>`) lê `gclid`, `wbraid`, `gbraid`, `fbclid`,
    todos os `utm_*`, mais os parâmetros de ValueTrack (`keyword`, `matchtype`,
    `campaignid`, `adgroupid`, `creative`, `device`, `network`, `placement`).
-   Guarda num cookie first-party `_rastro` de 90 dias em `.hotelbritanico.com.br`.
+   Guarda num cookie first-party `_rastro` de 90 dias em `.britanico.com`.
    **Não manda nada pro servidor ainda.**
 3. O mesmo script reescreve todo link `wa.me` / `api.whatsapp.com` da página para
-   `https://go.hotelbritanico.com.br/w/reservas` — o usuário não vê diferença.
+   `https://go.britanico.com/w/reservas` — o usuário não vê diferença.
    Botões de eventos/grupos podem usar `data-rastro-slug="eventos"`.
 4. Pessoa clica. O Worker lê o cookie (mesmo domínio-raiz, por isso chega),
    gera um código de 4 caracteres, grava o lead e responde `302` para:
@@ -241,7 +241,7 @@ três coisas antes do primeiro cliente real:
 | **1 — Rastreio** ✅ | `/r.js`, redirect de WhatsApp, captura de formulário, painel de leads com funil e marcação de status | Pronto — testado ponta a ponta local |
 | **2 — Google Ads** ✅ | Upload de conversão offline (gclid) + Enhanced Conversions por telefone, cron, tela de auditoria, `DRY_RUN` | Código pronto; falta credencial real e IDs das ações de conversão |
 | **3 — Meta** ✅ | CAPI com fbc/fbp + `event_id` para deduplicação | Código pronto; falta dataset e token |
-| **4 — Produção** ⏳ | Deploy na conta do cliente, números reais, tag no site, validação com `DRY_RUN` | **É o que falta** |
+| **4 — Produção** ⏳ | Números reais e IDs aplicados; falta o deploy na conta Cloudflare do hotel, a tag no site e o sufixo de ValueTrack na conta do Google Ads | **É o que falta** |
 
 As fases 0 a 3 estão implementadas e testadas localmente (45 testes, fluxo do
 lead percorrido de ponta a ponta com payload de conversão conferido). O que
@@ -252,13 +252,17 @@ os IDs das ações de conversão.
 
 ## 11. O que ainda preciso de você
 
-**Hotel Britânico:**
-- [ ] Domínio real (o código assume `hotelbritanico.com.br` — ajustar se for outro)
-- [ ] Acesso à conta Cloudflare do hotel, com a zona já lá
-- [ ] Confirmar o subdomínio `go.` (ou outro de sua preferência)
+**Hotel Britânico — recebido e aplicado:**
+- [x] Domínio `britanico.com` (o site de leads; o `.com.br` é reserva direta e fica fora)
+- [x] WhatsApp de reservas `5554996861751`
+- [x] Google Ads `404-103-5435`, sob a MCC `558-500-8872`, API v25.1
+- [x] Conta confere: BRL, America/Sao_Paulo, auto-tagging ligado
+- [ ] **Acesso à conta Cloudflare do hotel** — o conector está autorizado só
+      para a conta pessoal; na conta do hotel (`Reservas@britanico.com's
+      Account`) a API responde `Authentication error`. É o que trava o deploy.
 - [ ] Número de WhatsApp em E.164 (ex: `5548999999999`)
 - [ ] Volume aproximado de leads/mês
-- [ ] O hotel tem mais de um número (reservas, eventos)? O seed já prevê dois
+- [ ] O hotel tem um segundo número (eventos/grupos)? Hoje o seed tem só reservas
 
 **Google Ads:**
 - [ ] `customer_id` da conta do cliente (e o da MCC)

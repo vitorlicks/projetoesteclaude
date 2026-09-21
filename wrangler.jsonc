@@ -1,14 +1,15 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "rastro-hotel-britanico",
+  "name": "rastro-britanico",
   "main": "src/index.ts",
   "compatibility_date": "2026-09-01",
   "workers_dev": false,
 
-  // Domínio do cliente. O Worker precisa morar na conta Cloudflare que
-  // controla esta zona — é por isso que o deploy é feito na conta do cliente.
+  // britanico.com é o domínio do site de leads (o .com.br é reserva direta e
+  // não entra aqui). O Worker precisa morar na conta Cloudflare que controla
+  // esta zona — rota de Worker só funciona em zona da mesma conta.
   "routes": [
-    { "pattern": "go.hotelbritanico.com.br", "custom_domain": true }
+    { "pattern": "go.britanico.com", "custom_domain": true }
   ],
 
   "d1_databases": [
@@ -24,25 +25,34 @@
   "triggers": { "crons": ["17 * * * *"] },
 
   "vars": {
-    "COOKIE_DOMAIN": ".hotelbritanico.com.br",
-    "TRACKER_ORIGIN": "https://go.hotelbritanico.com.br",
-    "ALLOWED_ORIGINS": "https://hotelbritanico.com.br,https://www.hotelbritanico.com.br",
+    "COOKIE_DOMAIN": ".britanico.com",
+    "TRACKER_ORIGIN": "https://go.britanico.com",
+    "ALLOWED_ORIGINS": "https://britanico.com,https://www.britanico.com",
     "DEFAULT_SLUG": "reservas",
+
+    // Confirmado na conta 404-103-5435: America/Sao_Paulo, BRL.
+    // O Brasil não tem mais horário de verão, então -03:00 vale o ano todo.
     "TIMEZONE_OFFSET": "-03:00",
     "CURRENCY": "BRL",
     "RETENTION_MONTHS": "18",
 
-    // Confirme estas versões antes do primeiro envio real.
-    "GOOGLE_ADS_API_VERSION": "v21",
+    // Identificadores não são segredo — só os tokens são.
+    "GOOGLE_ADS_CUSTOMER_ID": "4041035435",
+    "GOOGLE_ADS_LOGIN_CUSTOMER_ID": "5585008872",
+
+    // A conta está na v25.1. O caminho da URL REST usa só a versão maior
+    // ("v25"); a normalização está em src/integrations/google-ads.ts e tem
+    // teste. Se um dia o Google exigir a menor no caminho, é lá que muda.
+    "GOOGLE_ADS_API_VERSION": "v25.1",
     "META_API_VERSION": "v21.0",
 
-    // Enquanto "true", o cron monta o payload, grava no log e NÃO envia.
-    // Vire para "false" só depois de conferir o payload na tela de auditoria.
+    // Enquanto "true", o cron monta e valida o payload mas NÃO grava
+    // conversão na conta. Conversão importada não pode ser apagada.
     "DRY_RUN": "true",
 
-    // Mapa status -> ID da ação de conversão do Google Ads (só o número).
+    // Preencher com os IDs das ações de conversão do tipo
+    // "Importar → Outras fontes (cliques)" depois de criá-las.
     "GOOGLE_CONVERSION_ACTIONS": "{}",
-    // Mapa status -> nome do evento no Meta.
     "META_EVENTS": "{\"cotacao_enviada\":\"Lead\",\"reserva_confirmada\":\"Purchase\"}"
   }
 }

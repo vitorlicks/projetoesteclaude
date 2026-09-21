@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { paraGoogleDateTime, paraEpoch } from '../src/lib/tempo';
 import { montarFbc } from '../src/integrations/meta';
-import { falhaParcial } from '../src/integrations/google-ads';
+import { falhaParcial, versaoNaUrl } from '../src/integrations/google-ads';
 import { valorDaConversao, noites, transicoesPossiveis, posicao, statusDef } from '../src/funil';
 import type { Lead } from '../src/types';
 
@@ -122,5 +122,21 @@ describe('funil de cotação', () => {
 describe('epoch do Meta', () => {
   it('converte para segundos', () => {
     expect(paraEpoch('2026-09-20T12:00:00.000Z')).toBe(1789905600);
+  });
+});
+
+describe('versão da API do Google na URL', () => {
+  it('reduz a versão com ponto para a maior, que é o que a URL aceita', () => {
+    // A conta do hotel é identificada como v25.1, mas
+    // googleads.googleapis.com/v25.1/... devolve 404 em todo upload.
+    expect(versaoNaUrl('v25.1')).toBe('v25');
+    expect(versaoNaUrl('25.1')).toBe('v25');
+    expect(versaoNaUrl('v25')).toBe('v25');
+    expect(versaoNaUrl(' V21 ')).toBe('v21');
+  });
+
+  it('falha alto em vez de montar uma URL sem versão', () => {
+    expect(() => versaoNaUrl('')).toThrow();
+    expect(() => versaoNaUrl('vX')).toThrow();
   });
 });

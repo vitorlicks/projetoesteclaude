@@ -1,5 +1,9 @@
 # Rastro — Hotel Britânico
 
+> Instalação dedicada do hotel, na conta Cloudflare dele.
+> `britanico.com` (site de leads) · Worker em `go.britanico.com`
+> Google Ads `404-103-5435` sob a MCC `558-500-8872` · BRL · America/Sao_Paulo
+
 Rastreio e atribuição de leads de cotação de reserva. Amarra cada conversa de
 WhatsApp e cada formulário do site à campanha, anúncio e palavra-chave que a
 originou, deixa a equipe marcar o que aconteceu, e devolve o estágio real do
@@ -41,7 +45,7 @@ Mudar de nicho depois é mexer só em `src/funil.ts`.
 
 ## Deploy (na conta Cloudflare do cliente)
 
-O Worker precisa morar na conta que controla a zona `hotelbritanico.com.br` —
+O Worker precisa morar na conta que controla a zona `britanico.com` —
 rota de Worker só funciona em zona da mesma conta. É por isso que o deploy é
 feito lá, e não na conta da agência.
 
@@ -61,18 +65,17 @@ npx wrangler secret put APP_PASSWORD
 npx wrangler deploy
 ```
 
-Depois, no painel Cloudflare do cliente, aponte `go.hotelbritanico.com.br` para
+Depois, no painel Cloudflare do cliente, aponte `go.britanico.com` para
 o Worker (a rota já está declarada como *custom domain* no `wrangler.jsonc`).
 
 ### Antes do primeiro lead real
 
 - [ ] `database_id` preenchido no `wrangler.jsonc`
-- [ ] `COOKIE_DOMAIN` = `.hotelbritanico.com.br` (com o ponto na frente)
-- [ ] `ALLOWED_ORIGINS` com todos os domínios do site (com e sem `www`)
-- [ ] Números reais em `migrations/0002_seed_destinos.sql` — o seed vem com
-      `5500000000000` de propósito, para não mandar ninguém para um número errado
-- [ ] `TIMEZONE_OFFSET` igual ao fuso configurado na conta do Google Ads
-- [ ] Tag `<script async src="https://go.hotelbritanico.com.br/r.js"></script>`
+- [x] `COOKIE_DOMAIN` = `.britanico.com` (o ponto na frente é o que faz o subdomínio ler o cookie)
+- [x] `ALLOWED_ORIGINS` com e sem `www`
+- [x] Número real no seed: `5554996861751` (reservas)
+- [x] `TIMEZONE_OFFSET` = `-03:00`, conferido contra a conta (America/Sao_Paulo)
+- [ ] Tag `<script async src="https://go.britanico.com/r.js"></script>`
       no site ou no GTM
 - [ ] Teste: abra o site com `?gclid=TESTE123`, clique no WhatsApp, confira se o
       lead apareceu com a origem certa
@@ -89,13 +92,33 @@ o Worker (a rota já está declarada como *custom domain* no `wrangler.jsonc`).
    npx wrangler secret put GOOGLE_ADS_CLIENT_ID
    npx wrangler secret put GOOGLE_ADS_CLIENT_SECRET
    npx wrangler secret put GOOGLE_ADS_REFRESH_TOKEN
-   npx wrangler secret put GOOGLE_ADS_CUSTOMER_ID       # só dígitos
-   npx wrangler secret put GOOGLE_ADS_LOGIN_CUSTOMER_ID # a MCC
    ```
+   Os IDs das contas já estão em `vars` no `wrangler.jsonc` (não são segredo):
+   cliente `4041035435`, MCC `5585008872`.
 4. **Deixe `DRY_RUN` em `"true"`.** Marque alguns leads, abra `/conversoes` e
    confira os payloads montados. Só então mude para `"false"` e faça deploy.
    Conversão importada no Google Ads **não pode ser apagada**.
-5. Confirme a versão da API em `GOOGLE_ADS_API_VERSION` antes do primeiro envio real.
+5. `GOOGLE_ADS_API_VERSION` está como `v25.1`. O caminho da URL REST usa só a
+   versão maior (`v25`) — a normalização está em `src/integrations/google-ads.ts`
+   e tem teste. Se o Google passar a exigir a menor no caminho, muda lá.
+
+### Sem isso, você tem o gclid mas não a palavra-chave
+
+A conta está com **auto-tagging ligado**, então o `gclid` chega sozinho na
+landing — é o que garante a atribuição da conversão. Mas o
+`tracking_url_template` da conta está **vazio**, e é dele que vêm `keyword`,
+`matchtype`, `campaignid` e `creative`.
+
+Sem um sufixo de URL final com ValueTrack, o painel mostra "Google Ads" na
+coluna Origem, mas não *qual palavra-chave* trouxe a reserva — que é metade do
+motivo de existir da ferramenta. O sufixo a colocar na conta (Configurações →
+Rastreamento → Sufixo de URL final):
+
+```
+utm_source=google&utm_medium=cpc&campaignid={campaignid}&adgroupid={adgroupid}&creative={creative}&keyword={keyword}&matchtype={matchtype}&network={network}&device={device}&placement={placement}
+```
+
+O tracker já lê todos esses parâmetros — é só a conta passar a mandá-los.
 
 Para o Meta, o mesmo caminho com `META_DATASET_ID` e `META_ACCESS_TOKEN`.
 

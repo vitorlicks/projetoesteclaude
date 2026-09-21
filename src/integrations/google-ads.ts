@@ -67,6 +67,23 @@ async function obterAccessToken(env: Env): Promise<string> {
   return corpo.access_token;
 }
 
+/**
+ * Converte a versão declarada no painel do Google Ads ("v25.1", "25.1") no
+ * segmento que vai na URL REST, que usa só a versão maior: "v25".
+ *
+ * Existe porque a conta é identificada por uma versão com ponto, mas
+ * `googleads.googleapis.com/v25.1/...` não é um caminho válido — e o erro
+ * disso é um 404 em todo upload, que passa despercebido até alguém abrir a
+ * tela de conversões. Se um dia o Google passar a exigir a menor no caminho,
+ * é esta função que muda.
+ */
+export function versaoNaUrl(declarada: string): string {
+  const limpa = (declarada || '').trim().replace(/^v/i, '');
+  const maior = limpa.split('.')[0]?.replace(/\D/g, '');
+  if (!maior) throw new Error(`GOOGLE_ADS_API_VERSION inválida: ${declarada}`);
+  return `v${maior}`;
+}
+
 export function acoesConfiguradas(env: Env): Record<string, string> {
   try {
     const mapa = JSON.parse(env.GOOGLE_CONVERSION_ACTIONS || '{}') as Record<string, unknown>;
@@ -156,7 +173,7 @@ export async function enviarLote(
   if (!env.GOOGLE_ADS_DEVELOPER_TOKEN) throw new Error('GOOGLE_ADS_DEVELOPER_TOKEN não configurado');
 
   const token = await obterAccessToken(env);
-  const versao = env.GOOGLE_ADS_API_VERSION || 'v21';
+  const versao = versaoNaUrl(env.GOOGLE_ADS_API_VERSION || 'v25');
   const url = `https://googleads.googleapis.com/${versao}/customers/${customerId}:uploadClickConversions`;
 
   const cabecalhos: Record<string, string> = {
