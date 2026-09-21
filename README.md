@@ -60,25 +60,43 @@ Já está no ar na conta Cloudflare do hotel:
 ### O que ainda falta
 
 1. **Virar o `DRY_RUN` para `"false"`** depois de conferir os payloads em `/conversoes`.
-2. **Resolver a diluição do sinal de lance** — veja abaixo. Sem isso, a conversão
-   sobe mas não muda o que a campanha busca.
+2. **Colocar `Rastro - Reserva confirmada` numa meta personalizada** quando
+   houver volume — veja abaixo. Até lá a conversão sobe e fica visível no
+   relatório, mas não muda o que a campanha busca.
 
-### A conversão sozinha não otimiza nada
+### O que a campanha de leads realmente persegue hoje
 
-A conta tem **10 ações de conversão marcadas como primárias**, entre elas
-`click_whatsapp site.` (clique no botão de WhatsApp), `Local actions - Website
-visits` (visita de página), `Click_para motor de reservas`, `add_to_cart` e
-`begin_checkout`. As duas campanhas ativas usam **Maximizar conversões sem
-otimização seletiva**, ou seja, dão lance pela *soma* de todas elas.
+Cada campanha da conta usa **meta de conversão em nível de campanha**
+(`goal_config_level: CAMPAIGN`), não as primárias da conta:
 
-Acrescentar "Reserva confirmada" como 11ª primária não muda o comportamento:
-algumas reservas por mês competem com centenas de cliques de botão e visitas de
-página. O sinal de reserva fica em torno de 1% do total.
+| Campanha | Meta personalizada | Ações na meta |
+|---|---|---|
+| `[leads][Pesquisa][10-08-2026]` | `click_whatsapp` (6458577924) | só `click_whatsapp site.` |
+| `[VENDA][RESERVA DIRETA][17-09]` | `click_para o motor de reservas` (6459041854) | só `Click_para motor de reservas` |
 
-O caminho cirúrgico é **meta de conversão em nível de campanha** (selective
-optimization) na `[leads][Pesquisa][10-08-2026]`, apontando só para
-`Rastro - Reserva confirmada`. Isso não mexe na configuração da conta nem na
-campanha de reserva direta.
+A campanha de leads dá lance por **uma única ação: o clique no botão de
+WhatsApp** — exatamente o evento que esta ferramenta existe para substituir.
+Não é um sinal diluído entre várias conversões; é o sinal inteiro.
+
+Consequência prática: `Rastro - Reserva confirmada` estar marcada como
+primária não afeta essas campanhas. Primária/secundária só vale para campanha
+que usa meta em nível de conta, e nenhuma aqui usa.
+
+As duas ações `Rastro` não pertencem a nenhuma meta personalizada. Isso é
+proposital: elas acumulam histórico sem tocar no lance. Quando houver volume,
+o passo é editar a meta (`customConversionGoals`, `updateMask:
+conversion_actions`) — dá para adicionar ação a uma meta existente a qualquer
+momento, inclusive depois de ela já ter dados.
+
+Dois caminhos quando chegar a hora:
+
+- **Adicionar** `Rastro - Reserva confirmada` à meta `click_whatsapp` — a
+  campanha passa a perseguir clique e reserva, transição mais suave.
+- **Criar** uma meta nova só com as ações `Rastro` e apontar a campanha para
+  ela — sinal puro, mas a campanha reentra em aprendizado do zero.
+
+Qualquer troca de meta muda o sinal de lance e reinicia o aprendizado; a
+escolha é sobre o tamanho do solavanco, não sobre evitá-lo.
 
 ## Deploy (na conta Cloudflare do cliente)
 
