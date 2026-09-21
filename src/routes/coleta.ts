@@ -29,11 +29,20 @@ const JANELA_DEDUPE_MIN = 30;
 
 // ---------------------------------------------------------------- tracker
 
-coleta.get('/r.js', (c) => {
+coleta.get('/r.js', async (c) => {
+  // Uma leitura por requisição. Com cache-control de 15 min e o volume de um
+  // hotel, isso é ruído perto do teto de 5 milhões de linhas lidas por dia.
+  const { results } = await c.env.DB.prepare(
+    `SELECT numero FROM numeros_site
+     UNION
+     SELECT numero_whatsapp AS numero FROM destinos WHERE ativo = 1`,
+  ).all<{ numero: string }>();
+
   const js = montarTracker({
     cookieDomain: c.env.COOKIE_DOMAIN,
     origem: c.env.TRACKER_ORIGIN,
     slugPadrao: c.env.DEFAULT_SLUG,
+    numerosPermitidos: (results ?? []).map((r) => r.numero),
   });
   return new Response(js, {
     headers: {
@@ -101,12 +110,23 @@ async function acharDestino(
     .first<Destino>();
   if (porSlug) return porSlug;
 
-  // O site pode ter um botão com número cravado que ninguém mapeou ainda.
+  // Número que aparece no site, inclusive os digitados errado: é aqui que um
+  // botão com número incompleto é redirecionado para o número certo.
   if (numero) {
+    const limpo = numero.replace(/\D/g, '');
+    const porSite = await env.DB.prepare(
+      `SELECT d.* FROM numeros_site n
+         JOIN destinos d ON d.slug = n.destino_slug
+        WHERE n.numero = ? AND d.ativo = 1`,
+    )
+      .bind(limpo)
+      .first<Destino>();
+    if (porSite) return porSite;
+
     const porNumero = await env.DB.prepare(
       'SELECT * FROM destinos WHERE numero_whatsapp = ? AND ativo = 1',
     )
-      .bind(numero.replace(/\D/g, ''))
+      .bind(limpo)
       .first<Destino>();
     if (porNumero) return porNumero;
   }

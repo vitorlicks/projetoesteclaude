@@ -591,6 +591,10 @@ painel.get('/instalacao', async (c) => {
     'SELECT * FROM destinos ORDER BY rowid',
   ).all<Destino>();
 
+  const { results: numeros } = await c.env.DB.prepare(
+    'SELECT numero, destino_slug, nota FROM numeros_site ORDER BY numero',
+  ).all<{ numero: string; destino_slug: string; nota: string | null }>();
+
   const snippet = `<script async src="${c.env.TRACKER_ORIGIN}/r.js"></script>`;
 
   const corpo = `
@@ -622,7 +626,23 @@ painel.get('/instalacao', async (c) => {
   }</tbody></table></div>
 <p class="sub" style="margin-top:12px">Para um botão específico, use <code>data-rastro-slug="eventos"</code> no link. Para excluir um link do rastreio, <code>data-rastro-ignorar</code>.</p>
 
-<h2>3. Conferência</h2>
+<h2>3. Números reconhecidos no site</h2>
+<p class="sub">O tracker só reescreve links para os números desta lista. É o que impede um clique no WhatsApp de terceiros — o crédito do desenvolvedor no rodapé, por exemplo — de virar lead de reserva.</p>
+<div class="rolagem"><table>
+<thead><tr><th>Número no site</th><th>Vai para</th><th>Observação</th></tr></thead>
+<tbody>${
+    (numeros ?? [])
+      .map(
+        (n) => `<tr>
+  <td><code>${esc(n.numero)}</code></td>
+  <td>${esc(n.destino_slug)}</td>
+  <td class="quebra fraco">${esc(n.nota ?? '')}</td>
+</tr>`,
+      )
+      .join('') || '<tr><td colspan="3" class="fraco">Nenhum número mapeado — só os dos destinos acima são reescritos.</td></tr>'
+  }</tbody></table></div>
+
+<h2>4. Conferência</h2>
 <div class="cartao">
   <p class="sub" style="margin:0">Abra o site com <code>?gclid=TESTE123</code> no fim da URL, clique no botão de WhatsApp e confira se o lead apareceu na lista com o código no texto da mensagem. Se aparecer “sem rastro”, o problema é o <code>COOKIE_DOMAIN</code> ou a tag não carregou.</p>
 </div>

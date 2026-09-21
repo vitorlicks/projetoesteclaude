@@ -16,6 +16,13 @@ export interface ConfigTracker {
   cookieDomain: string;
   origem: string;
   slugPadrao: string;
+  /**
+   * Números de WhatsApp que pertencem ao cliente. Só links para estes são
+   * reescritos — sem isso, o tracker sequestraria qualquer link de WhatsApp
+   * da página, incluindo o do desenvolvedor no rodapé, e transformaria um
+   * clique no crédito do site em "lead de reserva".
+   */
+  numerosPermitidos: string[];
 }
 
 export function montarTracker(cfg: ConfigTracker): string {
@@ -24,6 +31,7 @@ export function montarTracker(cfg: ConfigTracker): string {
   const dominio = JSON.stringify(cfg.cookieDomain);
   const origem = JSON.stringify(cfg.origem.replace(/\/$/, ''));
   const slug = JSON.stringify(cfg.slugPadrao);
+  const numeros = JSON.stringify(cfg.numerosPermitidos);
 
   return `/* rastro tracker */
 (function () {
@@ -35,6 +43,7 @@ export function montarTracker(cfg: ConfigTracker): string {
   var DOMINIO = ${dominio};
   var ORIGEM = ${origem};
   var SLUG_PADRAO = ${slug};
+  var NUMEROS = ${numeros};
   var DIAS = 90;
 
   function lerCookie(nome) {
@@ -135,8 +144,16 @@ export function montarTracker(cfg: ConfigTracker): string {
     if (a.getAttribute('data-rastro-ok') === '1') return;
     if (a.hasAttribute('data-rastro-ignorar')) return;
 
-    var slug = a.getAttribute('data-rastro-slug') || SLUG_PADRAO;
+    var slugExplicito = a.getAttribute('data-rastro-slug');
     var numero = numeroDoLink(href);
+
+    // Número que não é do cliente: o link não é nosso, não se mexe.
+    if (numero && NUMEROS.indexOf(numero) === -1) return;
+    // Sem número legível e sem slug declarado, não dá para saber para onde
+    // esse link deveria ir — melhor deixar como está do que chutar.
+    if (!numero && !slugExplicito) return;
+
+    var slug = slugExplicito || SLUG_PADRAO;
     var alvo = ORIGEM + '/w/' + encodeURIComponent(slug);
     if (numero) alvo += '?n=' + encodeURIComponent(numero);
 
