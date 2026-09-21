@@ -1,0 +1,24 @@
+{
+  "name": "rastro",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Rastreio e atribuicao de leads para campanhas de Google Ads e Meta Ads",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "db:local": "wrangler d1 migrations apply rastro --local",
+    "db:remote": "wrangler d1 migrations apply rastro --remote"
+  },
+  "dependencies": {
+    "hono": "^4.6.14"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260920.1",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8",
+    "wrangler": "^4.135.0"
+  }
+}

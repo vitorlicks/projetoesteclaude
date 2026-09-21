@@ -1,0 +1,48 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "rastro-hotel-britanico",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "workers_dev": false,
+
+  // Domínio do cliente. O Worker precisa morar na conta Cloudflare que
+  // controla esta zona — é por isso que o deploy é feito na conta do cliente.
+  "routes": [
+    { "pattern": "go.hotelbritanico.com.br", "custom_domain": true }
+  ],
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "rastro",
+      "database_id": "PREENCHER_APOS_wrangler_d1_create"
+    }
+  ],
+
+  // 1 dos 5 cron triggers do plano gratuito. Minuto 17 para não disputar
+  // com o pico de :00 de todo mundo.
+  "triggers": { "crons": ["17 * * * *"] },
+
+  "vars": {
+    "COOKIE_DOMAIN": ".hotelbritanico.com.br",
+    "TRACKER_ORIGIN": "https://go.hotelbritanico.com.br",
+    "ALLOWED_ORIGINS": "https://hotelbritanico.com.br,https://www.hotelbritanico.com.br",
+    "DEFAULT_SLUG": "reservas",
+    "TIMEZONE_OFFSET": "-03:00",
+    "CURRENCY": "BRL",
+    "RETENTION_MONTHS": "18",
+
+    // Confirme estas versões antes do primeiro envio real.
+    "GOOGLE_ADS_API_VERSION": "v21",
+    "META_API_VERSION": "v21.0",
+
+    // Enquanto "true", o cron monta o payload, grava no log e NÃO envia.
+    // Vire para "false" só depois de conferir o payload na tela de auditoria.
+    "DRY_RUN": "true",
+
+    // Mapa status -> ID da ação de conversão do Google Ads (só o número).
+    "GOOGLE_CONVERSION_ACTIONS": "{}",
+    // Mapa status -> nome do evento no Meta.
+    "META_EVENTS": "{\"cotacao_enviada\":\"Lead\",\"reserva_confirmada\":\"Purchase\"}"
+  }
+}

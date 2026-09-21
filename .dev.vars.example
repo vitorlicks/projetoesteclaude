@@ -1,0 +1,16 @@
+# Copie para .dev.vars (que está no .gitignore) para rodar local.
+# Em produção cada um destes vai como `wrangler secret put NOME`.
+# NUNCA comite valores reais.
+
+APP_PASSWORD=troque-isto
+SESSION_SECRET=gere-com-openssl-rand-base64-32
+
+GOOGLE_ADS_DEVELOPER_TOKEN=
+GOOGLE_ADS_CLIENT_ID=
+GOOGLE_ADS_CLIENT_SECRET=
+GOOGLE_ADS_REFRESH_TOKEN=
+GOOGLE_ADS_CUSTOMER_ID=
+GOOGLE_ADS_LOGIN_CUSTOMER_ID=
+
+META_DATASET_ID=
+META_ACCESS_TOKEN=
