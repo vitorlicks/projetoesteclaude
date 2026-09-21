@@ -55,14 +55,30 @@ Já está no ar na conta Cloudflare do hotel:
 | Rota | `go.britanico.com/*` + registro AAAA `100::` proxiado |
 | Cron | `17 * * * *` |
 | `DRY_RUN` | `true` — nenhuma conversão entra nas contas ainda |
+| Ações de conversão | `7783381880` Cotação enviada (secundária) · `7783381883` Reserva confirmada (primária) |
 
-**Falta um passo para o painel abrir:** o `APP_PASSWORD` não foi definido (de
-propósito — senha não deve trafegar por conversa). No painel da Cloudflare do
-hotel: *Workers & Pages → rastro-britanico → Settings → Variables and Secrets →
-Add → tipo Secret → nome `APP_PASSWORD`*. O `SESSION_SECRET` já está definido.
+### O que ainda falta
 
-Também falta criar as ações de conversão no Google Ads e preencher
-`GOOGLE_CONVERSION_ACTIONS` (veja abaixo).
+1. **Virar o `DRY_RUN` para `"false"`** depois de conferir os payloads em `/conversoes`.
+2. **Resolver a diluição do sinal de lance** — veja abaixo. Sem isso, a conversão
+   sobe mas não muda o que a campanha busca.
+
+### A conversão sozinha não otimiza nada
+
+A conta tem **10 ações de conversão marcadas como primárias**, entre elas
+`click_whatsapp site.` (clique no botão de WhatsApp), `Local actions - Website
+visits` (visita de página), `Click_para motor de reservas`, `add_to_cart` e
+`begin_checkout`. As duas campanhas ativas usam **Maximizar conversões sem
+otimização seletiva**, ou seja, dão lance pela *soma* de todas elas.
+
+Acrescentar "Reserva confirmada" como 11ª primária não muda o comportamento:
+algumas reservas por mês competem com centenas de cliques de botão e visitas de
+página. O sinal de reserva fica em torno de 1% do total.
+
+O caminho cirúrgico é **meta de conversão em nível de campanha** (selective
+optimization) na `[leads][Pesquisa][10-08-2026]`, apontando só para
+`Rastro - Reserva confirmada`. Isso não mexe na configuração da conta nem na
+campanha de reserva direta.
 
 ## Deploy (na conta Cloudflare do cliente)
 

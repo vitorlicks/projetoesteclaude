@@ -54,9 +54,10 @@
     // conversão na conta. Conversão importada não pode ser apagada.
     "DRY_RUN": "true",
 
-    // Preencher com os IDs das ações de conversão do tipo
-    // "Importar → Outras fontes (cliques)" depois de criá-las.
-    "GOOGLE_CONVERSION_ACTIONS": "{}",
+    // Ações de conversão do tipo UPLOAD_CLICKS criadas na conta 404-103-5435:
+    //   7783381880  Rastro - Cotacao enviada     (QUALIFIED_LEAD, secundária)
+    //   7783381883  Rastro - Reserva confirmada  (CONVERTED_LEAD, primária)
+    "GOOGLE_CONVERSION_ACTIONS": "{\"cotacao_enviada\":\"7783381880\",\"reserva_confirmada\":\"7783381883\"}",
     "META_EVENTS": "{\"cotacao_enviada\":\"Lead\",\"reserva_confirmada\":\"Purchase\"}"
   }
 }
