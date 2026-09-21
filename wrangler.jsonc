@@ -8,15 +8,19 @@
   // britanico.com é o domínio do site de leads (o .com.br é reserva direta e
   // não entra aqui). O Worker precisa morar na conta Cloudflare que controla
   // esta zona — rota de Worker só funciona em zona da mesma conta.
+  //
+  // É rota de zona, não custom domain: em go.britanico.com existe um registro
+  // AAAA 100:: proxiado (endereço-buraco-negro, quem responde é o Worker).
+  // Não troque para custom_domain sem remover a rota e o registro antes.
   "routes": [
-    { "pattern": "go.britanico.com", "custom_domain": true }
+    { "pattern": "go.britanico.com/*", "zone_name": "britanico.com" }
   ],
 
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "rastro",
-      "database_id": "PREENCHER_APOS_wrangler_d1_create"
+      "database_id": "83dd4241-3336-412b-b131-10b374bf40ec"
     }
   ],
 

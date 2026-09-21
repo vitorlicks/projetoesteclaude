@@ -43,30 +43,46 @@ Mudar de nicho depois é mexer só em `src/funil.ts`.
 
 ---
 
+## Estado atual (produção)
+
+Já está no ar na conta Cloudflare do hotel:
+
+| Item | Valor |
+|---|---|
+| Worker | `rastro-britanico` |
+| URL | `https://go.britanico.com` |
+| D1 | `rastro` · `83dd4241-3336-412b-b131-10b374bf40ec` |
+| Rota | `go.britanico.com/*` + registro AAAA `100::` proxiado |
+| Cron | `17 * * * *` |
+| `DRY_RUN` | `true` — nenhuma conversão entra nas contas ainda |
+
+**Falta um passo para o painel abrir:** o `APP_PASSWORD` não foi definido (de
+propósito — senha não deve trafegar por conversa). No painel da Cloudflare do
+hotel: *Workers & Pages → rastro-britanico → Settings → Variables and Secrets →
+Add → tipo Secret → nome `APP_PASSWORD`*. O `SESSION_SECRET` já está definido.
+
+Também falta criar as ações de conversão no Google Ads e preencher
+`GOOGLE_CONVERSION_ACTIONS` (veja abaixo).
+
 ## Deploy (na conta Cloudflare do cliente)
 
 O Worker precisa morar na conta que controla a zona `britanico.com` —
 rota de Worker só funciona em zona da mesma conta. É por isso que o deploy é
 feito lá, e não na conta da agência.
 
+O banco, o Worker, a rota e o cron já existem — o que segue serve para
+atualizações futuras e para replicar em outro cliente.
+
 ```bash
 npm install
 npx wrangler login                      # na conta do CLIENTE
-
-# 1. banco
-npx wrangler d1 create rastro           # copie o database_id para wrangler.jsonc
-npx wrangler d1 migrations apply rastro --remote
-
-# 2. segredos (nunca no repositório)
-npx wrangler secret put SESSION_SECRET  # openssl rand -base64 32
-npx wrangler secret put APP_PASSWORD
-
-# 3. deploy
+npx wrangler d1 migrations apply rastro --remote   # só se houver migration nova
 npx wrangler deploy
 ```
 
-Depois, no painel Cloudflare do cliente, aponte `go.britanico.com` para
-o Worker (a rota já está declarada como *custom domain* no `wrangler.jsonc`).
+Para um cliente novo, antes disso: `npx wrangler d1 create rastro`, copiar o
+`database_id` para o `wrangler.jsonc`, ajustar domínio e números, e definir os
+dois segredos (`SESSION_SECRET` e `APP_PASSWORD`).
 
 ### Antes do primeiro lead real
 
