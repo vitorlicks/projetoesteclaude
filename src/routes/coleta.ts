@@ -20,6 +20,7 @@ import {
 import { gerarCodigo } from '../lib/codigo';
 import { normalizarTelefone, normalizarEmail } from '../lib/hash';
 import { agora } from '../lib/tempo';
+import { renderizarMensagem } from '../lib/mensagem';
 import * as N from '../lib/normalizar';
 
 export const coleta = new Hono<{ Bindings: Env }>();
@@ -135,9 +136,7 @@ async function acharDestino(
 }
 
 function montarUrlWhatsApp(destino: Destino, codigo: string | null): string {
-  const texto = codigo
-    ? destino.template_mensagem.replace('{codigo}', codigo)
-    : destino.template_mensagem.replace(/\s*\[#\{codigo\}\]\s*/, '').trim();
+  const texto = renderizarMensagem(destino.template_mensagem, codigo);
   return `https://wa.me/${destino.numero_whatsapp}?text=${encodeURIComponent(texto)}`;
 }
 

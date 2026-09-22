@@ -23,7 +23,13 @@ Briefing e decisões de arquitetura: [`docs/BRIEFING.md`](docs/BRIEFING.md).
    botão de WhatsApp da página para passar pelo item 2.
 2. **`/w/:slug`** gera um código de 4 caracteres, grava o lead com a origem e
    redireciona para `wa.me` com o código dentro do texto:
-   *"Olá! Gostaria de uma cotação de reserva no Hotel Britânico. [#K7F2]"*
+   *"Olá! Quero uma cotação de reserva. Atendimento K7F2"*
+
+   O texto tem cara de protocolo de propósito: a primeira versão, em tom de
+   conversa e com o código entre colchetes no fim, era apagada antes do envio
+   e o clique pago chegava sem rastro. No template, `{codigo}` é o protocolo e
+   o trecho entre `[[ ]]` só entra quando existe código — varredura de link
+   recebe a frase sem ele.
 3. **Painel** — a equipe marca: Novo → Em contato → Cotação enviada → Reserva
    confirmada (ou Perdido, com motivo).
 4. **Cron horário** sobe as conversões: Google Ads por `gclid` ou por
